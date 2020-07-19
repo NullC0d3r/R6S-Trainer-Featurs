@@ -97,6 +97,17 @@ void EnablePatchLessUnlockAll()
     WriteProcessMemory(hProcess, (LPVOID)(GameBaseAddress + 0x1D2AE1B), MovShell, sizeof(MovShell), NULL);
 }
 
+void EnableRunAndShot()
+{
+    DWORD pid = GetPID("RainbowSix.exe");
+    hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
+
+    unsigned long long GameBaseAddress = GetModule(hProcess);
+    char MovShell[7]= { 0x80,0xB9,0x80,0x00 ,0x00 ,0x00, 0x01 };
+    WriteProcessMemory(hProcess, (LPVOID)(GameBaseAddress + 0x2DA5D35), MovShell, sizeof(MovShell), NULL);
+    WriteProcessMemory(hProcess, (LPVOID)(GameBaseAddress + 0x14765E1), MovShell, sizeof(MovShell), NULL);
+}
+
 
 
 float OutlineRainbow1()
@@ -147,7 +158,7 @@ auto Rainbow()
 
 bool InfiniteTime()
 {
-        uint64_t iTime = RPM<uint64_t>(base_address + 0x6713ed8);
+        uint64_t iTime = RPM<uint64_t>(base_address + 0x605D1C0);
         if (infinitetime)
         {
             WPM<BYTE>(iTime + 0x4c1, 0);
@@ -199,20 +210,14 @@ bool nC()
 
 bool nS()
 {
-        uintptr_t noSpread = RPM<uintptr_t>(base_address + 0x53a02e8);
-        noSpread = RPM<uintptr_t>(noSpread + 0xC8);
-        noSpread = RPM<uintptr_t>(noSpread + 0x0);
-        noSpread = RPM<uintptr_t>(noSpread + 0x90);
-        noSpread = RPM<uintptr_t>(noSpread + 0xC8);
-        noSpread = RPM<uintptr_t>(noSpread + 0x278);
-        WPM<BYTE>(noSpread + 0x168, 0);
+        uintptr_t noSpread = RPM<uintptr_t>(base_address + 0x1495e26d0);
         if (nospread)
         {
-            WPM<float>(noSpread + 0x58, 0);
+            WPM<float>(noSpread, 0);
         }
         else
         {
-            WPM<float>(noSpread + 0x58, 1);
+            WPM<float>(noSpread, 1);
         }
     return true;
 }
@@ -255,7 +260,7 @@ bool nR() //the best way
 }
 bool hpMod()
 {
-    uintptr_t hpMode = RPM<uintptr_t>(base_address + 0xe73f50b8);
+    uintptr_t hpMode = RPM<uintptr_t>(base_address + 0xe9bfdde8);
     if (hpmod)
     {
         WPM<byte>(hpMode , 999);
@@ -360,10 +365,12 @@ int main()
     std::cout << "[+] Unlock All Have Loaded Successfully\n";
     std::cout << " ";
     EnablePatchLessUnlockAll();
+    EnableRunAndShot();
     while (1)
     {
         game_manager = RPM<uint64_t>(base_address + 0x6713ED8);
         profile_manager = RPM<uint64_t>(base_address + 0x6759418);
+        Features();
   
         
             if (GetAsyncKeyState(VK_F1))
