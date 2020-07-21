@@ -88,14 +88,40 @@ uintptr_t GetModule(HANDLE Handle)
 }
 
 void EnablePatchLessUnlockAll()
-{
-    DWORD pid = GetPID("RainbowSix.exe");
+{  // >>>Patchless Way More Diff but Useful
+    unsigned char UnlockAllShellcode[81] =
+    {
+     0x53, 0x48, 0x83, 0xEC, 0x20, 0x48, 0xB8, 0xFE, 0xCA, 0xEF, 0xBE, 0xFE,
+    0xCA, 0xAD, 0xDE, 0xFF, 0xD0, 0x48, 0x89, 0xC3, 0x48, 0x8B, 0x54, 0x24,
+    0x28, 0x48, 0x89, 0xD1, 0x48, 0xB8, 0xFE, 0xCA, 0xEF, 0xBE, 0xFE, 0xCA,
+    0xAD, 0xDE, 0x48, 0x29, 0xC1, 0x48, 0x81, 0xF9, 0xD9, 0xAD, 0xD2, 0x01,
+    0x75, 0x16, 0x48, 0x8D, 0x8A, 0x26, 0xFC, 0xFF, 0xFF, 0x48, 0x89, 0x4C,
+    0x24, 0x28, 0x41, 0xC6, 0x46, 0x52, 0x00, 0x41, 0xC6, 0x46, 0x51, 0x00,
+    0x48, 0x89, 0xD8, 0x48, 0x83, 0xC4, 0x20, 0x5B, 0xC3
+    };
+
+   DWORD pid = GetPID("RainbowSix.exe");
+    hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
+    unsigned long long Buffer = NULL;
+    unsigned long long GameBaseAddress = GetModule(hProcess);
+
+    LPVOID AllocatedMemory = VirtualAllocEx(hProcess, NULL, 0x1000, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+    ReadProcessMemory(hProcess, (LPCVOID)(GameBaseAddress + 0x55643D0), &Buffer, sizeof(unsigned long long), NULL);
+    *(unsigned long long*)(&UnlockAllShellcode[0x7]) = Buffer;
+    *(unsigned long long*)(&UnlockAllShellcode[0x1E]) = (unsigned long long)GameBaseAddress;
+
+    WriteProcessMemory(hProcess, AllocatedMemory, UnlockAllShellcode, sizeof(UnlockAllShellcode), NULL);
+    WriteProcessMemory(hProcess, (LPVOID)(GameBaseAddress + 0x55643D0), &AllocatedMemory, sizeof(unsigned __int64), NULL);
+}
+   /*  >>Text Patch Way (Simple)
+   DWORD pid = GetPID("RainbowSix.exe");
     hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
 
     unsigned long long GameBaseAddress = GetModule(hProcess);
     char MovShell[] = { 0x41, 0xC6, 0x46, 0x51, 0x00, 0x90 };
     WriteProcessMemory(hProcess, (LPVOID)(GameBaseAddress + 0x1D2AE1B), MovShell, sizeof(MovShell), NULL);
-}
+    */
+
 
 void EnableRunAndShot()
 {
