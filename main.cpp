@@ -134,6 +134,15 @@ void EnableRunAndShot()
     WriteProcessMemory(hProcess, (LPVOID)(GameBaseAddress + 0x14765E1), MovShell, sizeof(MovShell), NULL);
 }
 
+void EnableCavEsp()
+{
+    DWORD pid = GetPID("RainbowSix.exe");
+    hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
+    unsigned long long GameBaseAddress = GetModule(hProcess);
+    char shellcode[] = { (char)0xE9, (char)0x92, (char)0xFE, (char)0xFF, (char)0xFF };
+    WriteProcessMemory(hProcess, (LPVOID)(GameBaseAddress + 0x5B61E9), shellcode, sizeof(shellcode), NULL);
+}
+
 
 
 float OutlineRainbow1()
@@ -284,6 +293,9 @@ bool nR() //the best way
         }
     return true;
 }
+
+
+
 bool hpMod()
 {
     uintptr_t hpMode = RPM<uintptr_t>(base_address + 0xe9bfdde8);
@@ -392,6 +404,7 @@ int main()
     std::cout << " ";
     EnablePatchLessUnlockAll();
     EnableRunAndShot();
+    EnableCavEsp();
     while (1)
     {
         game_manager = RPM<uint64_t>(base_address + 0x6713ED8);
