@@ -87,9 +87,14 @@ uintptr_t GetModule(HANDLE Handle)
     return false;
 }
 
+
+    
+
+
+
 void EnablePatchLessUnlockAll()
 {  // >>>Patchless Way More Diff but Useful
-    unsigned char UnlockAllShellcode[81] =
+   /* unsigned char UnlockAllShellcode[81] =
     {
      0x53, 0x48, 0x83, 0xEC, 0x20, 0x48, 0xB8, 0xFE, 0xCA, 0xEF, 0xBE, 0xFE,
     0xCA, 0xAD, 0xDE, 0xFF, 0xD0, 0x48, 0x89, 0xC3, 0x48, 0x8B, 0x54, 0x24,
@@ -112,35 +117,51 @@ void EnablePatchLessUnlockAll()
 
     WriteProcessMemory(hProcess, AllocatedMemory, UnlockAllShellcode, sizeof(UnlockAllShellcode), NULL);
     WriteProcessMemory(hProcess, (LPVOID)(GameBaseAddress + 0x55643D0), &AllocatedMemory, sizeof(unsigned __int64), NULL);
-}
-   /*  >>Text Patch Way (Simple)
-   DWORD pid = GetPID("RainbowSix.exe");
+}*/
+
+    DWORD pid = GetPID("RainbowSix.exe");
     hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
 
     unsigned long long GameBaseAddress = GetModule(hProcess);
     char MovShell[] = { 0x41, 0xC6, 0x46, 0x51, 0x00, 0x90 };
-    WriteProcessMemory(hProcess, (LPVOID)(GameBaseAddress + 0x1D2AE1B), MovShell, sizeof(MovShell), NULL);
-    */
+    WriteProcessMemory(hProcess, (LPVOID)(GameBaseAddress + 0x271470B), MovShell, sizeof(MovShell), NULL);
+}
+    //>>Text Patch Way (Simple)
+    
 
 
 void EnableRunAndShot()
 {
     DWORD pid = GetPID("RainbowSix.exe");
     hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
-
     unsigned long long GameBaseAddress = GetModule(hProcess);
     char MovShell[7]= { 0x80,0xB9,0x80,0x00 ,0x00 ,0x00, 0x01 };
-    WriteProcessMemory(hProcess, (LPVOID)(GameBaseAddress + 0x2DA5D35), MovShell, sizeof(MovShell), NULL);
-    WriteProcessMemory(hProcess, (LPVOID)(GameBaseAddress + 0x14765E1), MovShell, sizeof(MovShell), NULL);
+    WriteProcessMemory(hProcess, (LPVOID)(GameBaseAddress + 0x1E59401), MovShell, sizeof(MovShell), NULL);
+    WriteProcessMemory(hProcess, (LPVOID)(GameBaseAddress + 0x33AE195), MovShell, sizeof(MovShell), NULL);
 }
 
 void EnableCavEsp()
 {
+    auto entity_list = RPM<uint64_t>(0x65370E0 + 0x98) + 0xE60F6CF8784B5E96;
     DWORD pid = GetPID("RainbowSix.exe");
     hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
     unsigned long long GameBaseAddress = GetModule(hProcess);
-    char shellcode[] = { (char)0xE9, (char)0x92, (char)0xFE, (char)0xFF, (char)0xFF };
-    WriteProcessMemory(hProcess, (LPVOID)(GameBaseAddress + 0x5B61E9), shellcode, sizeof(shellcode), NULL);
+    for (int i = 0; i < 11; ++i)
+    {
+        auto entity_address = RPM<uint64_t>(entity_list + (0x8 * i));
+        auto buffer = RPM<uint64_t>(entity_address + 0x18);
+        auto size = RPM<uint32_t>(buffer + 0xE0) & 0x3FFFFFFF;
+        auto list_address = RPM<uint64_t>(buffer + 0xD8);
+        for (uint32_t i = 0; i < size; ++i)
+        {
+            auto pbuffer = RPM<uint64_t>(list_address + i * sizeof(uint64_t));
+            auto current_vtable_rel = RPM<uint64_t>(pbuffer) - GameBaseAddress;
+            if (current_vtable_rel == 0x4C1E130)
+            {
+                WPM<uint8_t>(pbuffer + 0x632, 1);
+            }
+        }
+    }
 }
 
 
@@ -245,52 +266,66 @@ bool nC()
 
 bool nS()
 {
-        uintptr_t noSpread = RPM<uintptr_t>(base_address + 0x1495e26d0);
-        if (nospread)
-        {
-            WPM<float>(noSpread, 0);
-        }
-        else
-        {
-            WPM<float>(noSpread, 1);
-        }
+    DWORD pid = GetPID("RainbowSix.exe");
+    hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
+    unsigned long long GameBaseAddress = GetModule(hProcess);
+    auto localplayer = RPM<uint64_t>(GameBaseAddress + 0x653ED48);
+    localplayer = RPM<uint64_t>(localplayer + 0x68);
+    localplayer = RPM<uint64_t>(localplayer + 0x0);
+    localplayer = RPM<uint64_t>(localplayer + 0x28) + 0xebab0991057478ed;
+
+    auto fov_manager = RPM<uint64_t>(GameBaseAddress + 0x658B0B0);
+    fov_manager = RPM<uint64_t>(fov_manager + 0xE8);
+    fov_manager = RPM<uint64_t>(fov_manager + 0x88B932A0D99755B8);
+
+    auto weapon = RPM<uint64_t>(localplayer + 0x90);
+    weapon = RPM<uint64_t>(weapon + 0xc8);
+
+    auto weapon2 = RPM<uint64_t>(weapon + 0x290) - 0x2b306cb952f73b96;
+    if (nospread)
+    {
+        WPM<float>(weapon2 + 0x80, 0.f);
+    }
+    else
+    {
+        WPM<float>(weapon2 + 0x80, 1.f);
+    }
     return true;
 }
 
 bool nR() //the best way
 {
-        uintptr_t noRecoilM = RPM<uintptr_t>(base_address + 0x53a02e8);
-        noRecoilM = RPM<uintptr_t>(noRecoilM + 0xc8);
-        noRecoilM = RPM<uintptr_t>(noRecoilM + 0x0);
-        noRecoilM = RPM<uintptr_t>(noRecoilM + 0x90);
-        noRecoilM = RPM<uintptr_t>(noRecoilM + 0xc8);
-        noRecoilM = RPM<uintptr_t>(noRecoilM + 0x278);
-        uintptr_t noRecoilH = RPM<uintptr_t>(base_address + 0x53a02e8);
-        noRecoilH = RPM<uintptr_t>(noRecoilH + 0xc8);
-        noRecoilH = RPM<uintptr_t>(noRecoilH + 0x0);
-        noRecoilH = RPM<uintptr_t>(noRecoilH + 0x90);
-        noRecoilH = RPM<uintptr_t>(noRecoilH + 0xc8);
-        noRecoilH = RPM<uintptr_t>(noRecoilH + 0x278);
-        uintptr_t noRecoilV = RPM<uintptr_t>(base_address + 0x53a02e8);
-        noRecoilV = RPM<uintptr_t>(noRecoilV + 0xc8);
-        noRecoilV = RPM<uintptr_t>(noRecoilV + 0x0);
-        noRecoilV = RPM<uintptr_t>(noRecoilV + 0x90);
-        noRecoilV = RPM<uintptr_t>(noRecoilV + 0xc8);
-        noRecoilV = RPM<uintptr_t>(noRecoilV + 0x278);
-        if (norecoil)
-        {
-            WPM<byte>(noRecoilM + 0x168, 0);
-            WPM<float>(noRecoilH + 0x14c, 0);
-            WPM<float>(noRecoilV + 0x15c, 0);
+    DWORD pid = GetPID("RainbowSix.exe");
+    hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
+    unsigned long long GameBaseAddress = GetModule(hProcess);
+    auto localplayer = RPM<uint64_t>(GameBaseAddress + 0x653ED48);
+    localplayer = RPM<uint64_t>(localplayer + 0x68);
+    localplayer = RPM<uint64_t>(localplayer + 0x0);
+    localplayer = RPM<uint64_t>(localplayer + 0x28) + 0xebab0991057478ed;
 
+    auto fov_manager = RPM<uint64_t>(GameBaseAddress + 0x658B0B0);
+    fov_manager = RPM<uint64_t>(fov_manager + 0xE8);
+    fov_manager = RPM<uint64_t>(fov_manager + 0x88B932A0D99755B8);
 
-        }
-        else
-        {
-            WPM<byte>(noRecoilM + 0x168, 1);
-            WPM<float>(noRecoilH + 0x14C, 1);
-            WPM<float>(noRecoilV + 0x15c,1);
-        }
+    auto weapon = RPM<uint64_t>(localplayer + 0x90);
+    weapon = RPM<uint64_t>(weapon + 0xc8);
+    
+    auto weapon2 = RPM<uint64_t>( weapon + 0x290) - 0x2b306cb952f73b96;
+
+    if (norecoil)
+    {
+        WPM<float>(fov_manager + 0xE34, 0.f);
+        WPM<float>(weapon2 + 0x198, 0.f);
+        WPM<float>(weapon2 + 0x18c, 0.f);
+        WPM<float>(weapon2 + 0x17c, 0.f);
+    }
+    else
+    {
+        WPM<float>(fov_manager + 0xE34, 1.f);
+        WPM<float>(weapon2 + 0x198, 1.f);
+        WPM<float>(weapon2 + 0x18c, 1.f);
+        WPM<float>(weapon2 + 0x17c, 1.f);
+    }
     return true;
 }
 
@@ -332,9 +367,9 @@ bool bulletMod()
 
 bool chams() 
 {
-        float strength = -1.5f;
+        float strength = 1.f;
         float strength2 = 3.5f;
-        uint64_t Glow = RPM<uint64_t>(base_address + 0x54E9CF8);
+        uint64_t Glow = RPM<uint64_t>(base_address + 0x5557890);
         Glow = RPM<uint64_t>(Glow + 0xB8);
         if (glow)
         {
@@ -383,9 +418,9 @@ void Features()
 int main()
 {
     SetConsoleTitle("Offline Trainers by Dine");
-    pid = GetPID("RainbowSix.exe");
+    DWORD pid = GetPID("RainbowSix.exe");
     hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
-    base_address = GetModule(hProcess);
+    unsigned long long GameBaseAddress = GetModule(hProcess);
     std::cout << " [+] Rainbow Six:Siege Cheat Features Show Case"<< "\n";
     std::cout << " [+] Trainers Coded by DineMX based on Oly474's Offline Trainers\n";
     std::cout << " [!!] ATTENTION : Using '/belaunch' to diable BattleEye Service\n\n\n";
@@ -407,8 +442,8 @@ int main()
     EnableCavEsp();
     while (1)
     {
-        game_manager = RPM<uint64_t>(base_address + 0x6713ED8);
-        profile_manager = RPM<uint64_t>(base_address + 0x6759418);
+        game_manager = RPM<uint64_t>(base_address + 0x65370E0);
+        profile_manager = RPM<uint64_t>(base_address + 0x653ED48);
         Features();
   
         
